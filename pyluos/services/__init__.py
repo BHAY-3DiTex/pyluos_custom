@@ -12,6 +12,8 @@ from .load import Load
 from .voltage import Voltage
 from .pipe import Pipe
 from .pressure import Pressure
+from .app_bttn_motor import AppBttnMotor
+from .light_column import LightColumn
 from .unknown import Unknown
 
 
@@ -24,13 +26,15 @@ __all__ = [
     'Angle',
     'Distance',
     'Gate',
-    'Imu' ,
+    'Imu',
     'Light',
     'Void',
     'Load',
     'Voltage',
     'Pipe',
     'Pressure',
+    'AppBttnMotor',
+    'LightColumn',
     'Unknown'
 ]
 
@@ -43,11 +47,13 @@ name2mod = {
     'Distance': Distance,
     'Gate': Gate,
     'Imu': Imu,
-    'Light' : Light,
-    'Void' : Void,
-    'Load' : Load,
-    'Voltage' : Voltage,
-    'Pipe' : Pipe,
+    'Light': Light,
+    'Void': Void,
+    'Load': Load,
+    'Voltage': Voltage,
+    'Pipe': Pipe,
     'Pressure': Pressure,
-    'Unknown' : Unknown
+    'AppBttnMotor': AppBttnMotor,
+    'LightColumn': LightColumn,
+    'Unknown': Unknown
 }
