@@ -1,4 +1,5 @@
 from .service import Service
+import time
 
 
 class Load(Service):
@@ -23,21 +24,21 @@ class Load(Service):
 
     @property
     def offset(self):
-            return self._offset
+        return self._offset
 
     @offset.setter
     def offset(self, value):
-            self._offset = value
-            self._push_value("offset",value)
+        self._offset = value
+        self._push_value("offset", value)
 
     @property
     def scale(self):
-            return self._scale
+        return self._scale
 
     @scale.setter
     def scale(self, value):
-            self._scale = value
-            self._push_value("resolution",value)
+        self._scale = value
+        self._push_value("resolution", value)
 
     def _update(self, new_state):
         Service._update(self, new_state)
@@ -58,5 +59,5 @@ class Load(Service):
             self.scale = scale
 
         w = interact(change_config,
-                    offset = self.offset,
-                    scale = self.scale)
+                     offset=self.offset,
+                     scale=self.scale)
