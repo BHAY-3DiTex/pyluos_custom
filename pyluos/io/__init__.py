@@ -18,7 +18,7 @@ class IOHandler(object):
         try:
             data = self.recv()
             if data is None:
-                return None
+                return {}
             table = data.splitlines()
             if len(table) > 1:
                 # load the Json of each substring
