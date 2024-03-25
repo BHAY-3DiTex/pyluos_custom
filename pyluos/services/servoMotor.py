@@ -40,12 +40,12 @@ class ServoMotor(Service):
         self._config[ServoMotor._MODE_POWER] = True
         self._config[ServoMotor._ANGULAR_POSITION] = True
 
-        #configuration
+        # configuration
         self._positionPid = [0.0, 0.0, 0.0]
         self._speedPid = [0.0, 0.0, 0.0]
-        self._resolution = 16 # encoder resolution
-        self._reduction = 131 # mechanical reduction after encoder
-        self._dimension = 100 # Wheel size (mm)
+        self._resolution = 16  # encoder resolution
+        self._reduction = 131  # mechanical reduction after encoder
+        self._dimension = 100  # Wheel size (mm)
         self._limit_rot_position = None
         self._limit_trans_position = None
         self._limit_rot_speed = None
@@ -55,7 +55,7 @@ class ServoMotor(Service):
         self._sampling_freq = 100.0
         self._control = 0
 
-        #targets
+        # targets
         self._compliant = True
         self._target_power = 0.0
         self._target_rot_speed = 0.0
@@ -66,30 +66,38 @@ class ServoMotor(Service):
         # report modes
         self._rot_position = 0.0
         self._rot_speed = 0.0
-        self._trans_position= 0.0
+        self._trans_position = 0.0
         self._trans_speed = 0.0
         self._current = 0.0
         self._temperature = 0.0
 
+        # Custom Cmd
+        self._stepPerTurn = 800
+        self._set_encoder = False
+        self._target_position_speed = [0, 0]
+        self._connected = True
+        self._buffer_return = False
+        self._buffer_size = 0
+
     def _convert_config(self):
-        return int(''.join(['1' if c else '0' for c in self._config]), 2) # Table read reversly
+        return int(''.join(['1' if c else '0' for c in self._config]), 2)  # Table read reversly
 
     def bit(self, i, enable):
         self._config = self._config[:i] + () + self._config[i + 1:]
 
-#************************** configurations *****************************
+# ************************** configurations *****************************
 
     def play(self):
         if (self._control >= self._REC):
             self._control = self._PLAY + self._REC
-        else :
+        else:
             self._control = self._PLAY
         self._push_value('control', self._control)
 
     def pause(self):
         if (self._control >= self._REC):
             self._control = self._PAUSE + self._REC
-        else :
+        else:
             self._control = self._PAUSE
         self._push_value('control', self._control)
 
@@ -102,7 +110,7 @@ class ServoMotor(Service):
         if (self._control >= self._REC):
             if (enable == False):
                 self._control = self._control - self._REC
-        else :
+        else:
             if (enable == True):
                 self._control = self._control + self._REC
         self._push_value('control', self._control)
@@ -237,7 +245,7 @@ class ServoMotor(Service):
         self._limit_current = s
         self._push_value("limit_current", s)
 
-#************************** target modes *****************************
+# ************************** target modes *****************************
 
     # compliant
     @property
@@ -246,7 +254,7 @@ class ServoMotor(Service):
 
     @compliant.setter
     def compliant(self, enable):
-        self._config[ServoMotor._MODE_COMPLIANT] = True if enable != 0  else False
+        self._config[ServoMotor._MODE_COMPLIANT] = True if enable != 0 else False
         self._compliant = enable
         self._push_value('parameters', self._convert_config())
         if (enable == False):
@@ -266,9 +274,9 @@ class ServoMotor(Service):
         if (self._config[ServoMotor._MODE_POWER] != True):
             print("power mode is not enabled in the service please use 'device.service.power_mode = True' to enable it")
         s = min(max(s, -100.0), 100.0)
-        #if s != self._target_power:
+        # if s != self._target_power:
         self._target_power = s
-        self._push_value("power_ratio",s)
+        self._push_value("power_ratio", s)
 
     @property
     def power_mode(self):
@@ -276,8 +284,8 @@ class ServoMotor(Service):
 
     @power_mode.setter
     def power_mode(self, enable):
-        self._config[ServoMotor._MODE_POWER] = True if enable != 0  else False
-        if (enable == True) :
+        self._config[ServoMotor._MODE_POWER] = True if enable != 0 else False
+        if (enable == True):
             self._config[ServoMotor._MODE_ANGULAR_SPEED] = False
             self._config[ServoMotor._MODE_ANGULAR_POSITION] = False
             self._config[ServoMotor._MODE_LINEAR_SPEED] = False
@@ -298,8 +306,8 @@ class ServoMotor(Service):
             print("rotation speed mode could be not enabled in the service please use 'device.service.rot_speed_mode = True' to enable it")
         self._target_rot_speed = s
         if hasattr(s, "__len__"):
-            self._push_data('target_rot_speed', [len(s) * 4], np.array(s, dtype=np.float32)) # multiplying by the size of float32
-        else :
+            self._push_data('target_rot_speed', [len(s) * 4], np.array(s, dtype=np.float32))  # multiplying by the size of float32
+        else:
             self._push_value("target_rot_speed", s)
 
     @property
@@ -308,8 +316,8 @@ class ServoMotor(Service):
 
     @rot_speed_mode.setter
     def rot_speed_mode(self, enable):
-        self._config[ServoMotor._MODE_ANGULAR_SPEED] = True if enable != 0  else False
-        if (enable == True) :
+        self._config[ServoMotor._MODE_ANGULAR_SPEED] = True if enable != 0 else False
+        if (enable == True):
             self._config[ServoMotor._MODE_LINEAR_SPEED] = False
             self._config[ServoMotor._MODE_POWER] = False
         self._push_value('parameters', self._convert_config())
@@ -328,8 +336,8 @@ class ServoMotor(Service):
             print("rotation position mode could be not enabled in the service please use 'device.service.rot_position_mode = True' to enable it")
         self._target_rot_position = s
         if hasattr(s, "__len__"):
-            self._push_data('target_rot_position', [len(s) * 4], np.array(s, dtype=np.float32)) # multiplying by the size of float32
-        else :
+            self._push_data('target_rot_position', [len(s) * 4], np.array(s, dtype=np.float32))  # multiplying by the size of float32
+        else:
             self._push_value("target_rot_position", s)
 
     @property
@@ -338,8 +346,8 @@ class ServoMotor(Service):
 
     @rot_position_mode.setter
     def rot_position_mode(self, enable):
-        self._config[ServoMotor._MODE_ANGULAR_POSITION] = True if enable != 0  else False
-        if (enable == True) :
+        self._config[ServoMotor._MODE_ANGULAR_POSITION] = True if enable != 0 else False
+        if (enable == True):
             self._config[ServoMotor._MODE_LINEAR_POSITION] = False
             self._config[ServoMotor._MODE_POWER] = False
         self._push_value('parameters', self._convert_config())
@@ -365,8 +373,8 @@ class ServoMotor(Service):
 
     @trans_speed_mode.setter
     def trans_speed_mode(self, enable):
-        self._config[ServoMotor._MODE_LINEAR_SPEED] = True if enable != 0  else False
-        if (enable == True) :
+        self._config[ServoMotor._MODE_LINEAR_SPEED] = True if enable != 0 else False
+        if (enable == True):
             self._config[ServoMotor._MODE_ANGULAR_SPEED] = False
             self._config[ServoMotor._MODE_POWER] = False
         self._push_value('parameters', self._convert_config())
@@ -385,9 +393,9 @@ class ServoMotor(Service):
             print("translation speed mode could be not enabled in the service please use 'device.service.trans_position_mode = True' to enable it")
         self._target_trans_position = s
         if hasattr(s, "__len__"):
-            self._push_value('target_trans_position', [len(s) * 4]) # multiplying by the size of float32
+            self._push_value('target_trans_position', [len(s) * 4])  # multiplying by the size of float32
             self._push_data(np.array(s, dtype=np.float32))
-        else :
+        else:
             self._push_value("target_trans_position", s)
 
     @property
@@ -396,13 +404,13 @@ class ServoMotor(Service):
 
     @trans_position_mode.setter
     def trans_position_mode(self, enable):
-        self._config[ServoMotor._MODE_LINEAR_POSITION] = True if enable != 0  else False
-        if (enable == True) :
+        self._config[ServoMotor._MODE_LINEAR_POSITION] = True if enable != 0 else False
+        if (enable == True):
             self._config[ServoMotor._MODE_ANGULAR_POSITION] = False
             self._config[ServoMotor._MODE_POWER] = False
         self._push_value('parameters', self._convert_config())
         time.sleep(0.01)
-#************************** report modes *****************************
+# ************************** report modes *****************************
 
     # rotation position
     @property
@@ -413,7 +421,7 @@ class ServoMotor(Service):
 
     @rot_position.setter
     def rot_position(self, enable):
-        self._config[ServoMotor._ANGULAR_POSITION] = True if enable != 0  else False
+        self._config[ServoMotor._ANGULAR_POSITION] = True if enable != 0 else False
         self._push_value('parameters', self._convert_config())
         time.sleep(0.01)
 
@@ -426,7 +434,7 @@ class ServoMotor(Service):
 
     @rot_speed.setter
     def rot_speed(self, enable):
-        self._config[ServoMotor._ANGULAR_SPEED] = True if enable != 0  else False
+        self._config[ServoMotor._ANGULAR_SPEED] = True if enable != 0 else False
         self._push_value('parameters', self._convert_config())
         time.sleep(0.01)
 
@@ -439,7 +447,7 @@ class ServoMotor(Service):
 
     @trans_position.setter
     def trans_position(self, enable):
-        self._config[ServoMotor._LINEAR_POSITION] = True if enable != 0  else False
+        self._config[ServoMotor._LINEAR_POSITION] = True if enable != 0 else False
         self._push_value('parameters', self._convert_config())
         time.sleep(0.01)
 
@@ -452,7 +460,7 @@ class ServoMotor(Service):
 
     @trans_speed.setter
     def trans_speed(self, enable):
-        self._config[ServoMotor._LINEAR_SPEED] = True if enable != 0  else False
+        self._config[ServoMotor._LINEAR_SPEED] = True if enable != 0 else False
         self._push_value('parameters', self._convert_config())
         time.sleep(0.01)
 
@@ -465,7 +473,7 @@ class ServoMotor(Service):
 
     @current.setter
     def current(self, enable):
-        self._config[ServoMotor._CURRENT] = True if enable != 0  else False
+        self._config[ServoMotor._CURRENT] = True if enable != 0 else False
         self._push_value('parameters', self._convert_config())
         time.sleep(0.01)
 
@@ -478,24 +486,24 @@ class ServoMotor(Service):
 
     @temperature.setter
     def temperature(self, enable):
-        self._config[ServoMotor._TEMPERATURE] = True if enable != 0  else False
+        self._config[ServoMotor._TEMPERATURE] = True if enable != 0 else False
         self._push_value('parameters', self._convert_config())
         time.sleep(0.01)
 
-#************************** custom motor type commands *****************************
+# ************************** custom motor type commands *****************************
 
     def dxl_set_id(self, id):
         self._push_value('set_id', id)
 
     def dxl_detect(self):
         self._push_value('reinit', 0)
-        print ("To get new detected Dxl motors usable on pyluos you should recreate your Pyluos object.")
+        print("To get new detected Dxl motors usable on pyluos you should recreate your Pyluos object.")
 
     def dxl_register(self, register, val):
         new_val = [register, val]
         self._push_value('register', new_val)
 
-#************************** controls and updates *****************************
+# ************************** controls and updates *****************************
 
     def _update(self, new_state):
         Service._update(self, new_state)
@@ -511,6 +519,8 @@ class ServoMotor(Service):
             self._current = new_state['current']
         if 'temperature' in new_state.keys():
             self._temperature = new_state['temperature']
+        if 'buffer_size' in new_state.keys():
+            self._buffer_size = new_state['buffer_size']
 
     def control(self):
         def change_config(rot_speed_report, rot_position_report, trans_speed_report, trans_position_report, current_report, compliant_mode, power_mode, power_ratio, rot_speed_mode, rot_speed, rot_position_mode, rot_position, trans_speed_mode, trans_speed, trans_position_mode, trans_position):
@@ -523,41 +533,110 @@ class ServoMotor(Service):
             # target mode
             self.compliant = compliant_mode
             self.power_mode = power_mode
-            if (power_mode) :
+            if (power_mode):
                 self.power_ratio = power_ratio
 
             self.rot_speed_mode = rot_speed_mode
-            if (rot_speed_mode) :
+            if (rot_speed_mode):
                 self.target_rot_speed = rot_speed
 
             self.rot_position_mode = rot_position_mode
-            if (rot_position_mode) :
+            if (rot_position_mode):
                 self.target_rot_position = rot_position
 
             self.trans_speed_mode = trans_speed_mode
-            if (trans_speed_mode) :
+            if (trans_speed_mode):
                 self.target_trans_speed = trans_speed
 
             self.trans_position_mode = trans_position_mode
-            if (trans_position_mode) :
+            if (trans_position_mode):
                 self.target_trans_position = trans_position
 
         w = interact(change_config,
-                        rot_speed_report = self._config[ServoMotor._ANGULAR_SPEED],
-                        rot_position_report = self._config[ServoMotor._ANGULAR_POSITION],
-                        trans_speed_report = self._config[ServoMotor._LINEAR_SPEED],
-                        trans_position_report = self._config[ServoMotor._LINEAR_POSITION],
-                        current_report = self._config[ServoMotor._CURRENT],
-                        temperature_report = self._config[ServoMotor._TEMPERATURE],
+                     rot_speed_report=self._config[ServoMotor._ANGULAR_SPEED],
+                     rot_position_report=self._config[ServoMotor._ANGULAR_POSITION],
+                     trans_speed_report=self._config[ServoMotor._LINEAR_SPEED],
+                     trans_position_report=self._config[ServoMotor._LINEAR_POSITION],
+                     current_report=self._config[ServoMotor._CURRENT],
+                     temperature_report=self._config[ServoMotor._TEMPERATURE],
 
-                        compliant_mode = self._config[ServoMotor._MODE_COMPLIANT],
-                        power_mode = self._config[ServoMotor._MODE_POWER],
-                        power_ratio=(-100.0, 100.0, 1.0),
-                        rot_speed_mode = self._config[ServoMotor._MODE_ANGULAR_SPEED],
-                        rot_speed = (-300.0, 300.0, 1.0),
-                        rot_position_mode = self._config[ServoMotor._MODE_ANGULAR_POSITION],
-                        rot_position = (-360.0, 360.0, 1.0),
-                        trans_speed_mode = self._config[ServoMotor._MODE_LINEAR_SPEED],
-                        trans_speed = (-1000.0, 1000.0, 1.0),
-                        trans_position_mode = self._config[ServoMotor._MODE_LINEAR_POSITION],
-                        trans_position = (-1000.0, 1000.0, 1.0))
+                     compliant_mode=self._config[ServoMotor._MODE_COMPLIANT],
+                     power_mode=self._config[ServoMotor._MODE_POWER],
+                     power_ratio=(-100.0, 100.0, 1.0),
+                     rot_speed_mode=self._config[ServoMotor._MODE_ANGULAR_SPEED],
+                     rot_speed=(-300.0, 300.0, 1.0),
+                     rot_position_mode=self._config[ServoMotor._MODE_ANGULAR_POSITION],
+                     rot_position=(-360.0, 360.0, 1.0),
+                     trans_speed_mode=self._config[ServoMotor._MODE_LINEAR_SPEED],
+                     trans_speed=(-1000.0, 1000.0, 1.0),
+                     trans_position_mode=self._config[ServoMotor._MODE_LINEAR_POSITION],
+                     trans_position=(-1000.0, 1000.0, 1.0))
+
+# CUSTOM CMD
+
+    # StepPerTurn Value
+    @property
+    def stepPerTurn(self):
+        return self._stepPerTurn
+
+    @stepPerTurn.setter
+    def stepPerTurn(self, val):
+        self._stepPerTurn = val
+        self._push_value("spt", val)
+
+    # Activate/Desactivate encoder
+    @property
+    def set_encoder(self):
+        return self._set_encoder
+
+    @set_encoder.setter
+    def set_encoder(self, boo):
+        self._set_encoder = boo
+        self._push_value("io_state", boo)
+
+    # Set target speed and target position
+    @property
+    def target_position_speed(self):
+        return self._target_position_speed
+
+    @target_position_speed.setter
+    def target_position_speed(self, s):
+        self._target_position_speed = s
+        self._push_value("pos_sp", s)
+
+    # Check if motor is connected
+    @property
+    def connected(self):
+        return self._connected
+
+    def isConnected(self):
+        return self._connected
+
+    # Activate/Desactivate buffer size return
+    @property
+    def buffer_return(self):
+        return self._buffer_return
+
+    @buffer_return.setter
+    def buffer_return(self, val):
+        self._buffer_return = val
+        self._push_value("buf_return", val)
+
+    # Trajectory buffer size
+    @property
+    def buffer_size(self):
+        return self._buffer_size
+
+    @buffer_size.setter
+    def buffer_size(self, val):
+        self._buffer_size = val
+        self._push_value("buffer_size", val)
+
+    # set new motor position in deg
+    @property
+    def setNewPos(self):
+        return 0
+
+    @setNewPos.setter
+    def setNewPos(self, pos):
+        self._push_value("new_pos", pos)
