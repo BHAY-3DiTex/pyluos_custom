@@ -78,6 +78,9 @@ class ServoMotor(Service):
         self._connected = True
         self._buffer_return = False
         self._buffer_size = 0
+        self._encod_position = 0
+        self._init_mode = False
+        self._track_position = 0
 
     def _convert_config(self):
         return int(''.join(['1' if c else '0' for c in self._config]), 2)  # Table read reversly
@@ -507,6 +510,8 @@ class ServoMotor(Service):
 
     def _update(self, new_state):
         Service._update(self, new_state)
+        
+        # print("new_state : ", new_state)
         if 'rot_position' in new_state.keys():
             self._rot_position = new_state['rot_position']
         if 'rot_speed' in new_state.keys():
@@ -521,7 +526,11 @@ class ServoMotor(Service):
             self._temperature = new_state['temperature']
         if 'buffer_size' in new_state.keys():
             self._buffer_size = new_state['buffer_size']
-
+        if 'encod_pos' in new_state.keys():
+            self._encod_position = new_state['encod_pos']
+        if 'track_pos' in new_state.keys():
+            self._track_position = new_state['track_pos']
+            
     def control(self):
         def change_config(rot_speed_report, rot_position_report, trans_speed_report, trans_position_report, current_report, compliant_mode, power_mode, power_ratio, rot_speed_mode, rot_speed, rot_position_mode, rot_position, trans_speed_mode, trans_speed, trans_position_mode, trans_position):
             # report config
@@ -640,3 +649,28 @@ class ServoMotor(Service):
     @setNewPos.setter
     def setNewPos(self, pos):
         self._push_value("new_pos", pos)
+
+    # Encoder position
+    @property
+    def encod_position(self):
+        return self._encod_position
+
+    # tracking position
+    @property
+    def track_position(self):
+        return self._track_position
+
+    @track_position.setter
+    def track_position(self, val):
+        self._track_position = val
+        self._push_value("track_pos", val)
+
+    # Activate/Desactivate Init Mode
+    @property
+    def init_mode(self):
+        return self._init_mode
+
+    @init_mode.setter
+    def init_mode(self, val):
+        self._init_mode = val
+        self._push_value("init_mode", val)
